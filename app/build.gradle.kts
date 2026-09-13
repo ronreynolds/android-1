@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.ronreynolds.android.clock"
-        minSdk = 24
+        minSdk = 23 // ZTE Z981 (Android 6.0)
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
