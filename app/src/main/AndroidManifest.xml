@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Android1">
         <activity
-            android:name="com.ronreynolds.android.clock.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -19,9 +19,10 @@
             </intent-filter>
         </activity>
         <service
-            android:name="com.ronreynolds.android.clock.ToneService"
+            android:name=".ToneService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false"/>
+        <receiver android:name=".ToneReceiver" />
     </application>
 
 </manifest>
