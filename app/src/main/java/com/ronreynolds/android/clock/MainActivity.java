@@ -12,11 +12,16 @@ import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
+
 /**
  * main class for the application
  */
 public class MainActivity extends AppCompatActivity {
-    private static final String LOG_TAG = "ToneService";
+    private final String LOG_TAG = getClass().getSimpleName();
 
     /**
      * invoked when the app is first created
@@ -36,9 +41,8 @@ public class MainActivity extends AppCompatActivity {
 
         Button btn = findViewById(R.id.btnStartService);
         btn.setOnClickListener(v -> {
-            Intent intent = new Intent(this, ToneService.class);
             // startForegroundService(intent); - API 26
-            startService(intent);   // API 23
+            startService(new Intent(this, ToneService.class));   // API 23
         });
 
         // for now we'll do this at startup (rather than as part of a "start" button push)
@@ -48,35 +52,42 @@ public class MainActivity extends AppCompatActivity {
     private void createNotificationChannel() {
         // only available on Oreo (Android-8.0) and later
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(new NotificationChannel(
                     "tone_channel",
                     "Tone Clock",
                     NotificationManager.IMPORTANCE_LOW
-            );
-
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(channel);
+            ));
         }
     }
-    private void scheduleRepeatingTone() {
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
-        Intent intent = new Intent(this, ToneReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+    private void scheduleRepeatingTone() {
+        // create these before delay-till-next-minute calc to minimize edge-case near minute boundary
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        long everyMinute = TimeUnit.MINUTES.toMillis(1);
+        PendingIntent operation = PendingIntent.getBroadcast(
                 this,
                 0,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT // if PendingIntent already exists just update it
+                new Intent(this, ToneReceiver.class),
+                PendingIntent.FLAG_UPDATE_CURRENT // if PendingIntent already exists update it
         );
 
-        long interval = 60 * 1000; // 1 minute
-        long startTime = System.currentTimeMillis() + 1000; // start in 1 second
-
-        alarmManager.setRepeating(
-                AlarmManager.RTC_WAKEUP,
-                startTime,
-                interval,
-                pendingIntent
-        );
+        // calculate millis until the next minute (first alarm)
+        final long startTimeMillis;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            LocalDateTime nextMinute = LocalDateTime.now().withSecond(0).withNano(0).plusMinutes(1);
+            startTimeMillis = nextMinute.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        } else {
+            // can't use Java DateTime till API 26 (ZTE supports API 23)
+            Calendar nextMinute = Calendar.getInstance();
+            // Truncate seconds and millis and add 1 minute
+            nextMinute.set(Calendar.SECOND, 0);
+            nextMinute.set(Calendar.MILLISECOND, 0);
+            nextMinute.add(Calendar.MINUTE, 1);
+            startTimeMillis = nextMinute.getTimeInMillis();
+        }
+        // start the alarms flowing
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, startTimeMillis, everyMinute, operation);
+        Log.d(LOG_TAG, "alarmManager.setRepeating returned");
     }
 }
