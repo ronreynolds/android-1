@@ -6,8 +6,9 @@ import android.content.SharedPreferences;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.Handler;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
+import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
@@ -24,6 +25,8 @@ public class ToneService extends Service {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("H m", Locale.US);
     private final String LOG_TAG = getClass().getSimpleName();
     private TextToSpeech textToSpeech;
+    private volatile boolean ttsReady = false;
+    private Handler handler;
 
     static float getPositiveFloat(SharedPreferences prefs, String key, float defaultValue) {
         float value;
@@ -46,19 +49,20 @@ public class ToneService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        handler = new Handler(Looper.getMainLooper());  // used for async callback until TTS is ready
 
+/*
         @SuppressWarnings("deprecation")    // required for API-23
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         float speechPitch = getPositiveFloat(prefs, "speech_pitch", 1.0f);
         float speechRate = getPositiveFloat(prefs, "speech_rate", 1.0f);
+*/
 
-        Log.d(LOG_TAG, "onCreate; creating TextToSpeech w/ pitch:" + speechPitch + " rate:" + speechRate);
+        Log.d(LOG_TAG, "onCreate; creating TextToSpeech");
         textToSpeech = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 Log.d(LOG_TAG, "TTS initialized");
-                // leave with TTS defaults
-//                textToSpeech.setPitch(speechPitch);
-//                textToSpeech.setSpeechRate(speechRate);
+                ttsReady = true;    // this tells us it's safe to use the TTS
             } else {
                 Log.e(LOG_TAG, "TTS init failed");
             }
@@ -84,18 +88,22 @@ public class ToneService extends Service {
                 .setContentTitle("Tone Clock Running")
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .build());
-//        playTone();
         sayTime();
         return START_STICKY;
     }
 
     private void sayTime() {
-        String text;
-        synchronized (dateFormat) {
-            text = dateFormat.format(new Date());
+        if (!ttsReady) {
+            Log.d(LOG_TAG, "TTS not ready; adding recursive delayed callback");
+            handler.postDelayed(this::sayTime, 100);    // call us back in 100ms
+        } else {
+            String text;
+            synchronized (dateFormat) { // because SimpleDateFormat isn't thread-safe
+                text = dateFormat.format(new Date());
+            }
+            Log.d(LOG_TAG, "sayTime - " + text);
+            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ToneService.sayTime");
         }
-        Log.d(LOG_TAG, "sayTime - " + text);
-        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ToneService.sayTime");
     }
 
     // old A-440 beep
