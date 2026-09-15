@@ -14,7 +14,7 @@ public class ToneReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(LOG_TAG, "onReceive");
-        // start the Tone service when we receive an Intent
+        // relay message to the Tone service
         context.startService(new Intent(context, ToneService.class));
     }
 }
