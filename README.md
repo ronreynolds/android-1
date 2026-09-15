@@ -1,2 +1,4 @@
-# android-1
-my first Android app (POC for things to follow)
+# Talking Clock
+
+my first Android app which has mutated into an event-driven service that emits the current time via
+the TextToSpeech service.
