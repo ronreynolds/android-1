@@ -6,9 +6,8 @@
     android:orientation="vertical">
 
     <Button
-        android:id="@+id/btnStartService"
+        android:id="@+id/btnSayTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/service_name" />
-
+        android:text="@string/say_time" />
 </LinearLayout>
