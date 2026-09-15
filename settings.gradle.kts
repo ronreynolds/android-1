@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "android-1"
+rootProject.name = "talking-clock"
 include(":app")
