@@ -1,15 +1,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
-        android:key="speech_pitch"
-        android:title="Speech pitch"
-        android:defaultValue="1.0"
-        android:dialogTitle="Set speech pitch"
-        android:inputType="numberDecimal" />
+        android:key="minute_period"
+        android:title="Integer minutes per"
+        android:defaultValue="1"
+        android:dialogTitle="Set the number of minutes between spoken clock times"
+        android:inputType="number" />
 
-    <EditTextPreference
-        android:key="speech_rate"
-        android:title="Speech rate"
-        android:defaultValue="1.0"
-        android:dialogTitle="Set speech rate"
-        android:inputType="numberDecimal" />
+    <SwitchPreference
+        android:key="is_24hr_time"
+        android:title="Use 24-hour format"
+        android:defaultValue="true" />
 </PreferenceScreen>
