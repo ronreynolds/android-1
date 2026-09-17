@@ -8,6 +8,7 @@ import com.ronreynolds.android.util.Logs;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,8 +38,9 @@ public class Settings {
     @SuppressWarnings("deprecation")    // required for API-23 (deprecated for API-29+)
     public static void init(Context context) {
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        Map<String,?> prefMap = preferences.getAll();
+        Logs.d(LOG_TAG, "init-preferences:" + prefMap);
     }
-
 
     public static boolean getBoolean(String key, boolean defaultVal) {
         boolean value = preferences != null ? preferences.getBoolean(key, defaultVal) : defaultVal;
@@ -47,17 +49,9 @@ public class Settings {
     }
 
     public static int getInteger(String key, int defaultValue) {
-        String valueAsString = getString(key, null);
-        if (valueAsString == null) {
-            Logs.w(LOG_TAG, "unable to find value for key " + key);
-            return defaultValue;
-        }
-        try {
-            return Integer.parseInt(valueAsString);
-        } catch (Exception fail) {
-            Logs.e(LOG_TAG, "failure to convert " + valueAsString + " to int", fail);
-            return defaultValue;
-        }
+        int value = preferences != null ? preferences.getInt(key, defaultValue) : defaultValue;
+        Logs.d(LOG_TAG, key + " = " + value);
+        return value;
     }
 
     public static String getString(String key, String defaultValue) {
@@ -77,19 +71,6 @@ public class Settings {
 
     public static int getPeriodMinutes() {
         return getInteger(KEY_MINUTE_PERIOD, 1);
-    }
-
-    public static float getPositiveFloat(String key, float defaultVal) {
-        if (preferences == null) {
-            return defaultVal;
-        }
-        float value;
-        try {
-            value = Float.parseFloat(getString(key, String.valueOf(defaultVal)));
-        } catch (Exception badData) {
-            value = defaultVal;
-        }
-        return Math.max(0.1f, value);
     }
 
     public static void setPeriodMinutes(int minutes) {
