@@ -129,9 +129,7 @@ public class ToneService extends Service {
             synchronized (currentTimeFormat) { // because SimpleDateFormat isn't thread-safe
                 text = currentTimeFormat.format(new Date());
             }
-            if (Logs.hasDebug(LOG_TAG)) {
-                Logs.d(LOG_TAG, "sayTime - " + text);
-            }
+            Logs.d(LOG_TAG, "sayTime - " + text);
             textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ToneService.sayTime");
         }
     }
