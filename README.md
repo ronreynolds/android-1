@@ -23,4 +23,5 @@ problem (lots of life left in the battery).
 * `...util.`
   * `Logs` - a wrapper around Android's `Log` to make it observable and a little nicer to use
   * `StringSupplier` - API23 is only Java-7 with lambdas so `Supplier<T>` isn't available
+  * `Time` - basic util for working with time and durations
   * `Tones` - formerly known as `Beeps` this is the original A-440 tone used for testing; kept to use later maybe
