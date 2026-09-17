@@ -67,6 +67,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/say_time" />
+    <Button
+        android:id="@+id/btnQuit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/quit" />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -88,9 +93,4 @@
             android:textIsSelectable="false"
             android:scrollbars="vertical" />
     </ScrollView>
-    <Button
-        android:id="@+id/btnQuit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/quit" />
 </LinearLayout>
