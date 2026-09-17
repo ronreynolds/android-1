@@ -7,10 +7,10 @@
     <string name="_24_hour">24-hour</string>
     <string name="_12_hour">12-hour</string>
     <string name="time_format">Time Format</string>
-    <string name="_15_minutes">15 minutes</string>
-    <string name="_10_minutes">10 minutes</string>
-    <string name="_5_minutes">5 minutes</string>
-    <string name="_1_minute">1 minute</string>
-    <string name="talk_period">Talk Period</string>
+    <string name="_15_minutes">15 min</string>
+    <string name="_10_minutes">10 min</string>
+    <string name="_5_minutes">5 min</string>
+    <string name="_1_minute">1 min</string>
+    <string name="talk_period">Talk Period (minutes)</string>
     <string name="log">Log</string>
 </resources>
