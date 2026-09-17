@@ -5,9 +5,85 @@
     android:gravity="center"
     android:orientation="vertical">
 
+    <!-- Talk Period -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/talk_period"
+        android:textStyle="bold"
+        android:paddingTop="12dp" />
+    <RadioGroup
+        android:id="@+id/periodGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <RadioButton
+            android:id="@+id/period1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/_1_minute" />
+        <RadioButton
+            android:id="@+id/period5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/_5_minutes" />
+        <RadioButton
+            android:id="@+id/period10"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/_10_minutes" />
+        <RadioButton
+            android:id="@+id/period15"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/_15_minutes" />
+    </RadioGroup>
+
+    <!-- Time Format -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/time_format"
+        android:textStyle="bold"
+        android:paddingTop="12dp" />
+    <RadioGroup
+        android:id="@+id/timeFormatGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <RadioButton
+            android:id="@+id/time12"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/_12_hour" />
+        <RadioButton
+            android:id="@+id/time24"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/_24_hour" />
+    </RadioGroup>
     <Button
         android:id="@+id/btnSayTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/say_time" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/log"
+        android:textStyle="bold"
+        android:paddingTop="12dp" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="350dp"
+        android:fillViewport="true">
+        <TextView
+            android:id="@+id/logView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:padding="8dp"
+            android:textColor="#FFFFFF"
+            android:background="#000000"
+            android:textIsSelectable="false"
+            android:scrollbars="vertical" />
+    </ScrollView>
 </LinearLayout>
