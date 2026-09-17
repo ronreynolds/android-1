@@ -10,9 +10,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.speech.tts.TextToSpeech;
-import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
+
+import com.ronreynolds.android.util.Logs;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -22,8 +23,7 @@ import java.util.Locale;
  * the service that actually provides the sound output
  */
 public class ToneService extends Service {
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(
-            Settings.is24HrTime() ? "H m" : "h m a", Locale.US);
+    private static SimpleDateFormat timeFormat;
     private static final String NOTIFICATION_CHANNEL_ID = "talk_clock_channel";
     private static final String NOTIFICATION_CHANNEL_NAME = "Talking Clock";
 
@@ -49,13 +49,26 @@ public class ToneService extends Service {
         super.onCreate();
         handler = new Handler(Looper.getMainLooper());  // used for async callback until TTS is ready
 
-        Log.d(LOG_TAG, "onCreate; creating TextToSpeech");
+        Settings.addObserver(new Settings.SettingObserver() {
+            @Override
+            public void onPeriodChange() {
+                // we don't care about this here
+            }
+            @Override
+            public void onClockTypeChange() {
+                updateTimeFormat();
+            }
+        });
+
+        // set our time-format from Settings before we use it (else Bad Things happen)
+        updateTimeFormat();
+        Logs.d(LOG_TAG, "onCreate; creating TextToSpeech");
         textToSpeech = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
-                Log.d(LOG_TAG, "TTS initialized");
+                Logs.d(LOG_TAG, "TTS initialized");
                 ttsReady = true;    // this tells us it's safe to use the TTS
             } else {
-                Log.e(LOG_TAG, "TTS init failed");
+                Logs.e(LOG_TAG, "TTS init failed");
             }
         });
 
@@ -89,8 +102,7 @@ public class ToneService extends Service {
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(LOG_TAG, "onStartCommand");
-
+        Logs.d(LOG_TAG, "onStartCommand");
         startForeground(1, startNotification);
         sayTime();
         return START_STICKY;
@@ -98,7 +110,7 @@ public class ToneService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d(LOG_TAG, "onDestroy");
+        Logs.d(LOG_TAG, "onDestroy");
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();   // <-- THIS unbinds the ServiceConnection
@@ -109,15 +121,22 @@ public class ToneService extends Service {
 
     private void sayTime() {
         if (!ttsReady) {
-            Log.d(LOG_TAG, "TTS not ready; adding recursive delayed callback");
+            Logs.d(LOG_TAG, "TTS not ready; adding recursive delayed callback");
             handler.postDelayed(this::sayTime, 100);    // call us back in 100ms
         } else {
             String text;
-            synchronized (DATE_FORMAT) { // because SimpleDateFormat isn't thread-safe
-                text = DATE_FORMAT.format(new Date());
+            final SimpleDateFormat currentTimeFormat = timeFormat;
+            synchronized (currentTimeFormat) { // because SimpleDateFormat isn't thread-safe
+                text = currentTimeFormat.format(new Date());
             }
-            Log.d(LOG_TAG, "sayTime - " + text);
+            if (Logs.hasDebug(LOG_TAG)) {
+                Logs.d(LOG_TAG, "sayTime - " + text);
+            }
             textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ToneService.sayTime");
         }
+    }
+
+    private void updateTimeFormat() {
+        timeFormat = new SimpleDateFormat(Settings.is24HrTime() ? "H m" : "h m a", Locale.US);
     }
 }
