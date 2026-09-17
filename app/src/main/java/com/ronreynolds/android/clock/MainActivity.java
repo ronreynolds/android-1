@@ -36,7 +36,13 @@ public class MainActivity extends AppCompatActivity {
 
         scheduleRepeatEvent();
 
-        // register out listener for Setting changes
+        // create the GUI bits
+        setContentView(R.layout.activity_main);
+        setupLogView();
+        setupSettingsGUI();
+        setupButtons();
+
+        // schedule our Settings observer AFTER we have all the GUI elements created
         Settings.addObserver(new Settings.SettingObserver() {
             @Override
             public void onPeriodChange() {
@@ -48,12 +54,6 @@ public class MainActivity extends AppCompatActivity {
                 // we don't care about this here
             }
         });
-
-        // create the GUI bits
-        setContentView(R.layout.activity_main);
-        setupLogView();
-        setupSettingsGUI();
-        setupButtons();
     }
 
     private void setupLogView() {
