@@ -14,14 +14,16 @@ nothing i could find.  it does seem to work longer if the phone is plugged in bu
 problem (lots of life left in the battery).
 
 ## Classes
-(current as of 0.9.1)
+(as of 1.0.0)
 * `...clock.`
+  * `IntentRelay`(was `ToneReceiver`) - routes broadcast `Intent` messages (emitted by `AlarmManager`) into the `SpeechService` 
   * `MainActivity` - main (only) window of app which bootstraps almost everything else
   * `Settings` - wrapper around Android `SharedPreferences` which is used to persist our settings; supports Observers
-  * `ToneReceiver` - routes broadcast `Intent` messages (emitted by `AlarmManager`) into the `ToneService` 
-  * `ToneService` - uses TTS (Text-To-Speech) to say the current time when it receives an `Intent`
+  * `SpeechService`(was `ToneService`) - uses TTS (Text-To-Speech) to say the current time when it receives an `Intent`
 * `...util.`
+  * `LimitedTextView` - wrapper around a `TextView` and its `ScrollView` that limits the number of lines stored  
   * `Logs` - a wrapper around Android's `Log` to make it observable and a little nicer to use
   * `StringSupplier` - API23 is only Java-7 with lambdas so `Supplier<T>` isn't available
   * `Time` - basic util for working with time and durations
   * `Tones` - formerly known as `Beeps` this is the original A-440 tone used for testing; kept to use later maybe
+  * `WeakArrayList` - an `ArrayList` version of a `WeakHashMap` to prevent memory leaks in observers
