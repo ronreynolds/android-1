@@ -6,11 +6,21 @@
 * commit messages: `<type>[(<scope>)]: <description>`
     * prefixes: fix, feature, build, test, chore, perf, docs, style, refactor, revert, ci, logs
 
-## 1.0.1 - unreleased
+## 1.0.2 - unreleased
 ### Added
 ### Changed
 ### Fixed
 ### Removed
+
+## 1.0.1 - 2026-09-19
+### Added
+* `Settings.setObserver()` to support single-observer use-case
+### Fixed
+* `SpeechService` observer of `Settings` is lost due to `WeakRef`
+  * REAL service is native peer that can outlive Java object
+  * fix is to hold strong ref to single `Observer`; not as elegant but it works (which is an elegance in itself). :)
+### Removed
+* `Settings.addObserver()` since we no longer support (for now) multiple `Settings` observers (KISS)
 
 ## 1.0.0 - 2026-09-18
 ### Added
