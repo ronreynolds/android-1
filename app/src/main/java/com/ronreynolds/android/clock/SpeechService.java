@@ -50,11 +50,11 @@ public class SpeechService extends Service {
      */
     @Override
     public void onCreate() {
-        Logs.d(LOG_TAG, "onCreate; id:" + System.identityHashCode(this));
+        Logs.d(LOG_TAG, "onCreate");
         super.onCreate();
         handler = new Handler(Looper.getMainLooper());  // used for async callback until TTS is ready
 
-        Settings.addObserver(new Settings.SettingObserver() {
+        Settings.setObserver(new Settings.SettingObserver() {
             @Override
             public void onPeriodChange() {
                 // if the period changes we discard the currently-scheduled intent and create a new one
@@ -110,7 +110,7 @@ public class SpeechService extends Service {
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Logs.d(LOG_TAG, "onStartCommand; id:" + System.identityHashCode(this));
+        Logs.d(LOG_TAG, "onStartCommand");
         scheduleNextIntent();   // schedule the next intent before we do anything else (minimal lag)
         startForeground(1, startNotification);
         sayTime();
