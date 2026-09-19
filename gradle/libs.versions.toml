@@ -2,6 +2,7 @@
 agp = "9.4.0"
 coreKtx = "1.19.0"
 junit = "4.13.2"
+assertJ = "3.27.7"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 appcompat = "1.8.0"
@@ -12,6 +13,7 @@ constraintlayout = "2.2.2"
 [libraries]
 androidx-core-ktx           = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit                       = { group = "junit", name = "junit", version.ref = "junit" }
+assertj                     = { group = "org.assertj", name="assertj-core", version.ref = "assertJ" }
 androidx-junit              = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core      = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat          = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
