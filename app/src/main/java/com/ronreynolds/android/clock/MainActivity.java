@@ -2,14 +2,17 @@ package com.ronreynolds.android.clock;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.RadioGroup;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.ronreynolds.android.util.LimitedTextView;
 import com.ronreynolds.android.util.Logs;
 import com.ronreynolds.android.util.Time;
 
@@ -17,7 +20,9 @@ import com.ronreynolds.android.util.Time;
  * main class for the application
  */
 public class MainActivity extends AppCompatActivity {
+    private static final int MAX_LOG_LINES = 100;    // any point in making this a setting?
     private final String LOG_TAG = getClass().getSimpleName();
+    private LimitedTextView logView;
 
     /**
      * invoked when the app is first created
@@ -34,57 +39,29 @@ public class MainActivity extends AppCompatActivity {
 
         Settings.init(this);    // initialize the global application settings
 
-        scheduleRepeatEvent();
-
         // create the GUI bits
         setContentView(R.layout.activity_main);
         setupLogView();
         setupSettingsGUI();
         setupButtons();
 
-        // schedule our Settings observer AFTER we have all the GUI elements created
-        Settings.addObserver(new Settings.SettingObserver() {
-            @Override
-            public void onPeriodChange() {
-                scheduleRepeatEvent();  // overwrite scheduled event when the period is changed
-            }
-
-            @Override
-            public void onClockTypeChange() {
-                // we don't care about this here
-            }
-        });
+        // schedule (with delay) the first message to start up the SpeechService
+        sendFirstIntent();
     }
 
     private void setupLogView() {
         // our Log view - updated as log events occur
-        TextView logView = findViewById(R.id.logView);
-        Logs.addObserver((int level, String context, String message, Throwable ex) -> {
-            String timestamp = Time.getTimeNow();
+        logView = new LimitedTextView(MAX_LOG_LINES, findViewById(R.id.logView), findViewById(R.id.logScrollView));
+        Logs.addObserver((level, context, message, ex) -> {
+            String timestamp = Time.getNowTimestamp();
             char cLevel = Logs.levelToChar(level);
-            logView.append(String.format("%s %s %c \"%s\"%n", timestamp, context, cLevel, message));
+            logView.appendLine(String.format("%s %c %s \"%s\"", timestamp, cLevel, context, message));
         });
     }
 
     private void setupSettingsGUI() {
         // setup Settings controls
         RadioGroup periodGroup = findViewById(R.id.periodGroup);
-        periodGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            int periodMinutes;
-            if (checkedId == R.id.period1) {
-                periodMinutes = 1;
-            } else if (checkedId == R.id.period5) {
-                periodMinutes = 5;
-            } else if (checkedId == R.id.period10) {
-                periodMinutes = 10;
-            } else if (checkedId == R.id.period15) {
-                periodMinutes = 15;
-            } else {
-                Logs.wtf(LOG_TAG, "invalid period minutes; checkedId:" + checkedId);
-                periodMinutes = 1;  // default to every minute (even tho this should never ever happen)
-            }
-            Settings.setPeriodMinutes(periodMinutes);
-        });
         switch (Settings.getPeriodMinutes()) {
             case 1:
                 periodGroup.check(R.id.period1);
@@ -101,63 +78,90 @@ public class MainActivity extends AppCompatActivity {
             default:
                 Logs.w(LOG_TAG, "period not set or invalid - " + Settings.getPeriodMillis());
                 Settings.setPeriodMinutes(1);
+                periodGroup.check(R.id.period1);
         }
+        // register change-listener AFTER setting radios to initial state
+        periodGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            int periodMinutes;
+            if (checkedId == R.id.period1) {
+                periodMinutes = 1;
+            } else if (checkedId == R.id.period5) {
+                periodMinutes = 5;
+            } else if (checkedId == R.id.period10) {
+                periodMinutes = 10;
+            } else if (checkedId == R.id.period15) {
+                periodMinutes = 15;
+            } else {
+                Logs.wtf(LOG_TAG, "invalid period minutes; checkedId:" + checkedId);
+                periodMinutes = 1;  // default to every minute (even tho this should never ever happen)
+            }
+            Settings.setPeriodMinutes(periodMinutes);
+        });
 
         RadioGroup timeFormatGroup = findViewById(R.id.timeFormatGroup);
-        timeFormatGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            Settings.setUse24HourTime(checkedId == R.id.time24);
-        });
         if (Settings.is24HrTime()) {
             timeFormatGroup.check(R.id.time24);
         } else {
             timeFormatGroup.check(R.id.time12);
         }
+        // register change-listener AFTER setting radios to initial state
+        timeFormatGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            Settings.setUse24HourTime(checkedId == R.id.time24);
+        });
     }
 
     private void setupButtons() {
         // simple "go" button (mostly for testing but also to init the TTS system)
         Button btn = findViewById(R.id.btnSayTime);
-        btn.setOnClickListener(v -> {
-            startService(new Intent(this, ToneService.class));   // API 23
-        });
+        btn.setOnClickListener(this::sayTime);
+        ;
+        // clean quit option
+        Button quietBtn = findViewById(R.id.btnQuiet);
+        quietBtn.setOnClickListener(this::setMinimumVolume);
         // clean quit option
         Button quitBtn = findViewById(R.id.btnQuit);
-        quitBtn.setOnClickListener(v -> shutdown());
+        quitBtn.setOnClickListener(this::shutdown);
     }
 
-    private void scheduleRepeatEvent() {
-        // create these before delay-till-next-minute calc to minimize edge-case near minute boundary
-        final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        final long periodMillis = Settings.getPeriodMillis();
-        final PendingIntent operation = PendingIntent.getBroadcast(
-                this,
-                0,
-                new Intent(this, ToneReceiver.class),   // target for messages
-                PendingIntent.FLAG_UPDATE_CURRENT // if PendingIntent already exists update it
+    private PendingIntent createIntent() {
+        Context context = this;
+        int requestCode = 0;
+        Intent messageWithTarget = new Intent(this, IntentRelay.class);
+        return PendingIntent.getBroadcast(context, requestCode, messageWithTarget,
+                PendingIntent.FLAG_UPDATE_CURRENT   // update if one already exists with this context + id
         );
-        final long startTimeMillis = Time.getMillisTillNextMinute();
-        // start the alarms flowing
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, startTimeMillis, periodMillis, operation);
-        Logs.d(LOG_TAG, () -> "alarmManager.setRepeating returned; " +
-                "starting in " + startTimeMillis / 1000 + " seconds with period "
-                + periodMillis / 1000);
     }
 
-    private void shutdown() {
+    private void sendFirstIntent() {
+        // create these before delay-till-next-minute calc to minimize edge-case near minute boundary
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        PendingIntent operation = createIntent();
+        // try to start ON the minute (can introduce up to 60 seconds of delay on startup)
+        long startTimeMillis = Time.getMillisTillNextMinute();
+        // schedule the event for startTimeMillis in the future
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startTimeMillis, operation);
+        Logs.d(LOG_TAG, () -> "alarmManager.setAndAllowWhileIdle returned; " +
+                "firing in " + startTimeMillis / 1000 + " seconds");
+    }
+
+    private void sayTime(View ignore) {
+        startService(new Intent(this, SpeechService.class));
+    }
+
+    private void setMinimumVolume(View ignore) {
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);    // lowest audible volume
+    }
+
+    private void shutdown(View ignore) {
         Logs.d(LOG_TAG, "shutdown called");
 
-        // Cancel repeating alarm
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        PendingIntent operation = PendingIntent.getBroadcast(
-                this,
-                0,
-                new Intent(this, ToneReceiver.class),
-                PendingIntent.FLAG_UPDATE_CURRENT
-        );
-        alarmManager.cancel(operation);
+        // Cancel first alarm (if any)
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        alarmManager.cancel(createIntent());
 
         // Stop any running services (if you have one)
-        stopService(new Intent(this, ToneService.class));
+        stopService(new Intent(this, SpeechService.class));
 
         // Finish the Activity
         finish();
