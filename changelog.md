@@ -11,6 +11,9 @@
 ### Changed
 ### Fixed
 ### Removed
+### ToDo
+* migrate build and app to Android-15 (see readme for changes)
+* add an about with version and log the version on startup
 
 ## 1.0.1 - 2026-09-19
 ### Added
