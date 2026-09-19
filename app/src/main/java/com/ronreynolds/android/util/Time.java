@@ -16,6 +16,9 @@ public class Time {
     private static final SimpleDateFormat TIMESTAMP_FORMAT =
             new SimpleDateFormat("HH:mm:ss", Locale.US);
 
+    /**
+     * @return the milliseconds until the next minute starts (rounds up if you're at the 0.0 second)
+     */
     public static long getMillisTillNextMinute() {
         // before Oreo java-time wasn't available
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -31,7 +34,24 @@ public class Time {
         }
     }
 
-    public static String getTimeNow() {
+    /**
+     * given an epochMillis value round it down to the HH:mm:00 of the current minute
+     * @param epochMillis the value to be rounded down to the 0.0 second boundary of its minute
+     * @return the epoch-millis of the most recent HH:mm:00.0 instant
+     */
+    public static long roundDownToMinuteMillis(long epochMillis) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(epochMillis);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
+    }
+
+    /**
+     * get "now" in HH:mm:ss format (in whatever the default timezone is)
+     * @return an HH:mm:ss format string of the current time in the system default timezone
+     */
+    public static String getNowTimestamp() {
         synchronized (TIMESTAMP_FORMAT) {
             return TIMESTAMP_FORMAT.format(new Date());
         }
