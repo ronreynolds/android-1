@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import com.ronreynolds.android.util.Logs;
-import com.ronreynolds.android.util.WeakArrayList;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -25,12 +24,14 @@ public class Settings {
     private static final String KEY_24HR_TIME = "is_24hr_time";
     private static final String KEY_MINUTE_PERIOD = "minute_period";
     // don't be the only reason the observers don't get GCed.
-    private static final WeakArrayList<SettingObserver> observerList = new WeakArrayList<>();
-
+    private static SettingObserver observer;
     private static SharedPreferences preferences;
 
-    public static void addObserver(SettingObserver obs) {
-        observerList.add(obs);
+    /**
+     * version used for single observer; dropping multi-observer pattern for now
+     */
+    public static void setObserver(SettingObserver obs) {
+        observer = obs;
     }
 
     /**
@@ -76,16 +77,16 @@ public class Settings {
 
     public static void setPeriodMinutes(int minutes) {
         preferences.edit().putInt(KEY_MINUTE_PERIOD, minutes).apply();
-        Logs.d(LOG_TAG, "setPeriodMinutes; notifying " + observerList.size() + " observers");
-        for (SettingObserver observer : observerList) {
+        if (observer != null) {
+            Logs.d(LOG_TAG, "setPeriodMinutes; notifying " + observer);
             observer.onPeriodChange();
         }
     }
 
     public static void setUse24HourTime(boolean h24) {
         preferences.edit().putBoolean(KEY_24HR_TIME, h24).apply();
-        Logs.d(LOG_TAG, "setUse24HourTime; notifying " + observerList.size() + " observers");
-        for (SettingObserver observer : observerList) {
+        if (observer != null) {
+            Logs.d(LOG_TAG, "setUse24HourTime; notifying " + observer);
             observer.onClockTypeChange();
         }
     }
