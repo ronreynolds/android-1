@@ -5,9 +5,8 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import com.ronreynolds.android.util.Logs;
+import com.ronreynolds.android.util.WeakArrayList;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -18,13 +17,15 @@ import java.util.concurrent.TimeUnit;
 public class Settings {
     public interface SettingObserver {
         void onPeriodChange();
+
         void onClockTypeChange();
     }
 
     private static final String LOG_TAG = "Settings";
-    private static final List<SettingObserver> observerList = new ArrayList<>();
     private static final String KEY_24HR_TIME = "is_24hr_time";
     private static final String KEY_MINUTE_PERIOD = "minute_period";
+    // don't be the only reason the observers don't get GCed.
+    private static final WeakArrayList<SettingObserver> observerList = new WeakArrayList<>();
 
     private static SharedPreferences preferences;
 
@@ -38,7 +39,7 @@ public class Settings {
     @SuppressWarnings("deprecation")    // required for API-23 (deprecated for API-29+)
     public static void init(Context context) {
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        Map<String,?> prefMap = preferences.getAll();
+        Map<String, ?> prefMap = preferences.getAll();
         Logs.d(LOG_TAG, "init-preferences:" + prefMap);
     }
 
@@ -75,6 +76,7 @@ public class Settings {
 
     public static void setPeriodMinutes(int minutes) {
         preferences.edit().putInt(KEY_MINUTE_PERIOD, minutes).apply();
+        Logs.d(LOG_TAG, "setPeriodMinutes; notifying " + observerList.size() + " observers");
         for (SettingObserver observer : observerList) {
             observer.onPeriodChange();
         }
@@ -82,6 +84,7 @@ public class Settings {
 
     public static void setUse24HourTime(boolean h24) {
         preferences.edit().putBoolean(KEY_24HR_TIME, h24).apply();
+        Logs.d(LOG_TAG, "setUse24HourTime; notifying " + observerList.size() + " observers");
         for (SettingObserver observer : observerList) {
             observer.onClockTypeChange();
         }
