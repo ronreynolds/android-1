@@ -8,12 +8,22 @@
 
 ## 1.0.2 - unreleased
 ### Added
+* logging of the app name and version on startup
+* moved anything not related to creation of GUI elements out of `MainActivity.onCreate()` and into `finishSetup()` for faster startup 
+  * `finishSetup()` is then invoked via a posted message that is processed after the first render
+  * due to info message from `Choreographer`: Skipped 40 frames!  The application may be doing too much work on its main thread.
+  * this also required adding `muteSettingsChanges` to prevent: settings -> GUI -> change-handler -> settings
 ### Changed
+* source and target JVM upgraded to 17 (from 11)
+* replacing variable types with `var` where reasonable
+  * unfortunately can't replace `SimpleDateFormat` with `DateTimeFormatter` because we're still targeting API-23
+  * API-26 is required to use certain Java-11 features :-/
 ### Fixed
 ### Removed
+* `SpeechService.dateFormat` to simplify code (we don't invoke it more than once/minute so caching ROI is ~0)
+  * `SpeechSevice.updateTimeFormat()` and `Settings` observer also removed as they're no longer needed
 ### ToDo
-* migrate build and app to Android-15 (see readme for changes)
-* add an about with version and log the version on startup
+* migrate build and app to Android-15(API-35) (see readme for changes)
 
 ## 1.0.1 - 2026-09-19
 ### Added
