@@ -29,7 +29,6 @@ import java.util.Locale;
 public class SpeechService extends Service {
     private static final String NOTIFICATION_CHANNEL_ID = "talk_clock_channel";
     private static final String NOTIFICATION_CHANNEL_NAME = "Talking Clock";
-    private static SimpleDateFormat timeFormat;
 
     private final String LOG_TAG = getClass().getSimpleName();
     private TextToSpeech textToSpeech;
@@ -64,12 +63,11 @@ public class SpeechService extends Service {
 
             @Override
             public void onClockTypeChange() {
-                updateTimeFormat();
+                // no longer matters since we read it every time (haha)
             }
         });
 
         // set our time-format from Settings before we use it (else Bad Things happen)
-        updateTimeFormat();
         Logs.d(LOG_TAG, "onCreate; creating TextToSpeech");
         textToSpeech = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
@@ -164,17 +162,11 @@ public class SpeechService extends Service {
             Logs.d(LOG_TAG, "TTS not ready; adding recursive delayed callback");
             handler.postDelayed(this::sayTime, 100);    // call us back in 100ms
         } else {
-            String text;
-            final SimpleDateFormat currentTimeFormat = timeFormat;
-            synchronized (currentTimeFormat) { // because SimpleDateFormat isn't thread-safe
-                text = currentTimeFormat.format(new Date());
-            }
+            // not sure there's much point for DateTimeFormatter for something so simple and rare
+            String text = new SimpleDateFormat(Settings.is24HrTime() ? "H m" : "h m a", Locale.US)
+                    .format(new Date());
             Logs.d(LOG_TAG, "sayTime - " + text);
             textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "SpeechService.sayTime");
         }
-    }
-
-    private void updateTimeFormat() {
-        timeFormat = new SimpleDateFormat(Settings.is24HrTime() ? "H m" : "h m a", Locale.US);
     }
 }
