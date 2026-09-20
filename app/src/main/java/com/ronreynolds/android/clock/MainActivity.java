@@ -4,7 +4,10 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -23,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int MAX_LOG_LINES = 100;    // any point in making this a setting?
     private final String LOG_TAG = getClass().getSimpleName();
     private LimitedTextView logView;
+    private boolean muteSettingsChanges;
 
     /**
      * invoked when the app is first created
@@ -34,53 +38,60 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Logs.d(LOG_TAG, "onCreate called");
+        Logs.d(LOG_TAG, "onCreate()");
         super.onCreate(savedInstanceState);
-
-        Settings.init(this);    // initialize the global application settings
-
-        // create the GUI bits
+        // create the GUI bits (but keep it light to avoid skipped frames on startup)
         setContentView(R.layout.activity_main);
-        setupLogView();
         setupSettingsGUI();
         setupButtons();
+        // delay the rest of our startup work to after the first draw to avoid skipped frames
+        getWindow().getDecorView().post(this::finishSetup);
+    }
 
-        // schedule (with delay) the first message to start up the SpeechService
+    private void finishSetup() {
+        Logs.d(LOG_TAG, "finishSetup()");
+
+        // create our line-limited wrapper around the log TextView/ScrollView pair
+        setupLogView();
+        // initialize the global application settings (this can be quite slow)
+        Settings.init(this);
+        // reflect settings in the UI controls
+        updateGuiToSettings();
+
+        // startup log message
+        PackageInfo packageInfo;
+        String appName = getPackageManager().getApplicationLabel(getApplicationInfo()).toString();
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {    // API 33+
+                packageInfo = getPackageManager()
+                        .getPackageInfo(getPackageName(), PackageManager.PackageInfoFlags.of(0));
+            } else {
+                packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            }
+            Logs.i(LOG_TAG, appName + " v" + packageInfo.versionName);
+        } catch (PackageManager.NameNotFoundException fail) {
+            Logs.e(LOG_TAG, "failed to get package info - " + fail, fail);
+        }
+
+        // send the first message to start up the SpeechService
         sendFirstIntent();
     }
 
     private void setupLogView() {
         // our Log view - updated as log events occur
-        logView = new LimitedTextView(MAX_LOG_LINES, findViewById(R.id.logView), findViewById(R.id.logScrollView));
+        logView = new LimitedTextView(MAX_LOG_LINES, findViewById(R.id.logView),
+                findViewById(R.id.logScrollView));
         Logs.addObserver((level, context, message, ex) -> {
             String timestamp = Time.getNowTimestamp();
             char cLevel = Logs.levelToChar(level);
-            logView.appendLine(String.format("%s %c %s \"%s\"", timestamp, cLevel, context, message));
+            logView.appendLine(
+                    String.format("%s %c %s \"%s\"", timestamp, cLevel, context, message));
         });
     }
 
     private void setupSettingsGUI() {
         // setup Settings controls
         RadioGroup periodGroup = findViewById(R.id.periodGroup);
-        switch (Settings.getPeriodMinutes()) {
-            case 1:
-                periodGroup.check(R.id.period1);
-                break;
-            case 5:
-                periodGroup.check(R.id.period5);
-                break;
-            case 10:
-                periodGroup.check(R.id.period10);
-                break;
-            case 15:
-                periodGroup.check(R.id.period15);
-                break;
-            default:
-                Logs.w(LOG_TAG, "period not set or invalid - " + Settings.getPeriodMillis());
-                Settings.setPeriodMinutes(1);
-                periodGroup.check(R.id.period1);
-        }
-        // register change-listener AFTER setting radios to initial state
         periodGroup.setOnCheckedChangeListener((group, checkedId) -> {
             int periodMinutes;
             if (checkedId == R.id.period1) {
@@ -95,18 +106,16 @@ public class MainActivity extends AppCompatActivity {
                 Logs.wtf(LOG_TAG, "invalid period minutes; checkedId:" + checkedId);
                 periodMinutes = 1;  // default to every minute (even tho this should never ever happen)
             }
-            Settings.setPeriodMinutes(periodMinutes);
+            if (!muteSettingsChanges) {
+                Settings.setPeriodMinutes(periodMinutes);
+            }
         });
 
         RadioGroup timeFormatGroup = findViewById(R.id.timeFormatGroup);
-        if (Settings.is24HrTime()) {
-            timeFormatGroup.check(R.id.time24);
-        } else {
-            timeFormatGroup.check(R.id.time12);
-        }
-        // register change-listener AFTER setting radios to initial state
         timeFormatGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            Settings.setUse24HourTime(checkedId == R.id.time24);
+            if (!muteSettingsChanges) {
+                Settings.setUse24HourTime(checkedId == R.id.time24);
+            }
         });
     }
 
@@ -114,7 +123,6 @@ public class MainActivity extends AppCompatActivity {
         // simple "go" button (mostly for testing but also to init the TTS system)
         Button btn = findViewById(R.id.btnSayTime);
         btn.setOnClickListener(this::sayTime);
-        ;
         // clean quit option
         Button quietBtn = findViewById(R.id.btnQuiet);
         quietBtn.setOnClickListener(this::setMinimumVolume);
@@ -123,10 +131,41 @@ public class MainActivity extends AppCompatActivity {
         quitBtn.setOnClickListener(this::shutdown);
     }
 
+    private void updateGuiToSettings() {
+        // disable the code that would send these GUI changes back into settings
+        muteSettingsChanges = true;
+        try {
+            RadioGroup periodGroup = findViewById(R.id.periodGroup);
+            switch (Settings.getPeriodMinutes()) {
+                case 1:
+                    periodGroup.check(R.id.period1);
+                    break;
+                case 5:
+                    periodGroup.check(R.id.period5);
+                    break;
+                case 10:
+                    periodGroup.check(R.id.period10);
+                    break;
+                case 15:
+                    periodGroup.check(R.id.period15);
+                    break;
+                default:
+                    Logs.w(LOG_TAG, "period not set or invalid - " + Settings.getPeriodMillis());
+                    Settings.setPeriodMinutes(1);
+                    periodGroup.check(R.id.period1);
+            }
+            RadioGroup timeFormatGroup = findViewById(R.id.timeFormatGroup);
+            timeFormatGroup.check(Settings.is24HrTime() ? R.id.time24 : R.id.time12);
+        } finally {
+            // from now on push any GUI element changes into settings
+            muteSettingsChanges = false;
+        }
+    }
+
     private PendingIntent createIntent() {
         Context context = this;
         int requestCode = 0;
-        Intent messageWithTarget = new Intent(this, IntentRelay.class);
+        var messageWithTarget = new Intent(this, IntentRelay.class);
         return PendingIntent.getBroadcast(context, requestCode, messageWithTarget,
                 PendingIntent.FLAG_UPDATE_CURRENT   // update if one already exists with this context + id
         );
@@ -134,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendFirstIntent() {
         // create these before delay-till-next-minute calc to minimize edge-case near minute boundary
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        var alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         PendingIntent operation = createIntent();
         // try to start ON the minute (can introduce up to 60 seconds of delay on startup)
         long startTimeMillis = Time.getMillisTillNextMinute();
@@ -149,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setMinimumVolume(View ignore) {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        var am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         am.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);    // lowest audible volume
     }
 
@@ -157,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
         Logs.d(LOG_TAG, "shutdown called");
 
         // Cancel first alarm (if any)
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        var alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         alarmManager.cancel(createIntent());
 
         // Stop any running services (if you have one)
@@ -167,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
         finish();
 
         // Optional: return to home screen explicitly
-        Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+        var homeIntent = new Intent(Intent.ACTION_MAIN);
         homeIntent.addCategory(Intent.CATEGORY_HOME);
         homeIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(homeIntent);
