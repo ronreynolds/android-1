@@ -50,7 +50,7 @@ public class TimeTest {
     @Test
     public void getMillisTillNextMinute_returnsFutureTimeWithinReasonableBounds() {
         long now = System.currentTimeMillis();
-        long next = Time.getMillisTillNextMinute();
+        long next = Time.getMillisOfNextMinute();
 
         // next minute must be >= now and < now + 60,000 ms
         assertThat(next)

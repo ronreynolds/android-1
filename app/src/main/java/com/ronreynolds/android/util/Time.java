@@ -17,9 +17,9 @@ public class Time {
             new SimpleDateFormat("HH:mm:ss", Locale.US);
 
     /**
-     * @return the milliseconds until the next minute starts (rounds up if you're at the 0.0 second)
+     * @return the epoch-millis of the next minute's start (rounds up if you're at the 0.0 second)
      */
-    public static long getMillisTillNextMinute() {
+    public static long getMillisOfNextMinute() {
         // before Oreo java-time wasn't available
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             LocalDateTime nextMinute = LocalDateTime.now().withSecond(0).withNano(0).plusMinutes(1);
