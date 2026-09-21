@@ -131,9 +131,8 @@ public class SpeechService extends Service {
         Context context = this;
         int requestCode = 42;
         Intent messageWithTarget = new Intent(this, IntentRelay.class);
-        return PendingIntent.getBroadcast(context, requestCode, messageWithTarget,
-                PendingIntent.FLAG_UPDATE_CURRENT   // update if one already exists with this context + id
-        );
+        return PendingIntent.getBroadcast(
+                context, requestCode, messageWithTarget, PendingIntent.FLAG_IMMUTABLE);
     }
 
     /**
@@ -147,7 +146,7 @@ public class SpeechService extends Service {
         long triggerTime = Time.roundDownToMinuteMillis(now + Settings.getPeriodMillis());
         // schedule the intent to fire in periodMillis
         alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, createIntent());
-        Logs.d(LOG_TAG, () -> "scheduleNextIntent; alarmManager.setAndAllowWhileIdle returned; " +
+        Logs.i(LOG_TAG, () -> "scheduleNextIntent; alarmManager.setAndAllowWhileIdle returned; " +
                 "firing in " + (triggerTime - now) / 1000 + " seconds");
     }
 
