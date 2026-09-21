@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- ignore warning -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -9,7 +15,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.TalkingClock">
-
         <!-- register the main screen -->
         <activity
             android:name=".MainActivity"
@@ -27,7 +32,6 @@
         <!-- the guy that actually emits audio -->
         <service
             android:name=".SpeechService"
-            android:foregroundServiceType="mediaPlayback"
-            android:exported="false" />
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 </manifest>
