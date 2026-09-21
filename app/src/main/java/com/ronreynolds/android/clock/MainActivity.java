@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Logs.d(LOG_TAG, "onCreate()");
+        Logs.i(LOG_TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         // create the GUI bits (but keep it light to avoid skipped frames on startup)
         setContentView(R.layout.activity_main);
@@ -166,12 +166,12 @@ public class MainActivity extends AppCompatActivity {
         Context context = this;
         int requestCode = 0;
         var messageWithTarget = new Intent(this, IntentRelay.class);
-        return PendingIntent.getBroadcast(context, requestCode, messageWithTarget,
-                PendingIntent.FLAG_UPDATE_CURRENT   // update if one already exists with this context + id
-        );
+        return PendingIntent.getBroadcast(
+                context, requestCode, messageWithTarget, PendingIntent.FLAG_IMMUTABLE);
     }
 
     private void sendFirstIntent() {
+        Logs.i(LOG_TAG, "sendFirstIntent");
         // create these before delay-till-next-minute calc to minimize edge-case near minute boundary
         var alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         PendingIntent operation = createIntent();
@@ -179,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
         long startTimeMillis = Time.getMillisTillNextMinute();
         // schedule the event for startTimeMillis in the future
         alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startTimeMillis, operation);
-        Logs.d(LOG_TAG, () -> "alarmManager.setAndAllowWhileIdle returned; " +
+        Logs.i(LOG_TAG, () -> "alarmManager.setAndAllowWhileIdle returned; " +
                 "firing in " + startTimeMillis / 1000 + " seconds");
     }
 
@@ -193,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void shutdown(View ignore) {
-        Logs.d(LOG_TAG, "shutdown called");
+        Logs.i(LOG_TAG, "shutdown called");
 
         // Cancel first alarm (if any)
         var alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
