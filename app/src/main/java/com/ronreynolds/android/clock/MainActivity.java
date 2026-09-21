@@ -176,11 +176,11 @@ public class MainActivity extends AppCompatActivity {
         var alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         PendingIntent operation = createIntent();
         // try to start ON the minute (can introduce up to 60 seconds of delay on startup)
-        long startTimeMillis = Time.getMillisTillNextMinute();
+        long startTimeMillis = Time.getMillisOfNextMinute();
         // schedule the event for startTimeMillis in the future
         alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startTimeMillis, operation);
         Logs.i(LOG_TAG, () -> "alarmManager.setAndAllowWhileIdle returned; " +
-                "firing in " + startTimeMillis / 1000 + " seconds");
+                "firing in " + (startTimeMillis - System.currentTimeMillis()) / 1000 + " seconds");
     }
 
     private void sayTime(View ignore) {
