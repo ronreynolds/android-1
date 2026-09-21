@@ -41,7 +41,7 @@ address the probably inevitable impact that'll have (and the learning experience
   * correct foreground service type (mediaPlayback, systemExcepted, etc)
   * without a type Android 14+ may throttle or reject the service :(
 * `AlarmManager` exact-timing restrictions
-  * Android 15 has strick batching rules; will need to use `setExactAndAllowWhileIdle`
+  * Android 15 has strict batching rules; will need to use `setExactAndAllowWhileIdle`
 * Runtime permission model changes
   * Android 15 requires runtime requests for:
     * POST_NOTIFICATIONS
