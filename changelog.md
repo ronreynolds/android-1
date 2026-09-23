@@ -6,24 +6,39 @@
 * commit messages: `<type>[(<scope>)]: <description>`
     * prefixes: fix, feature, build, test, chore, perf, docs, style, refactor, revert, ci, logs
 
-## 1.0.2 - unreleased
+## 1.0.3 - unreleased
+### Added
+* different minimum-volume numbers based on Android version
+  * 1 on Android-6 is MUCH louder than 1 on Android-15; could be the device but i'll start by presuming the OS
+  * added logging of the min-volume and max-volume dB
+* app-name and version header to UI and pulled from `BuildConfig`
+### Changed
+### Fixed
+* disabled rotation from causing `MainActivity` to be restarted
+  * IDE warning indicates our solution is deprecated and will not work after Android-16 :-/
+  * at which point we'll just have to let it rotate and recreate the `MainActivity` (and be smarter about startup-vs-restart)
+### Removed
+### ToDo
+
+## 1.0.2 - 2026-09-20
 ### Added
 * logging of the app name and version on startup
 * moved anything not related to creation of GUI elements out of `MainActivity.onCreate()` and into `finishSetup()` for faster startup 
   * `finishSetup()` is then invoked via a posted message that is processed after the first render
   * due to info message from `Choreographer`: Skipped 40 frames!  The application may be doing too much work on its main thread.
   * this also required adding `muteSettingsChanges` to prevent: settings -> GUI -> change-handler -> settings
+* migrated build and app to Android-15(API-35) (see readme for changes)
+  * confirmed app still works with Android-6 via emulator
 ### Changed
 * source and target JVM upgraded to 17 (from 11)
 * replacing variable types with `var` where reasonable
   * unfortunately can't replace `SimpleDateFormat` with `DateTimeFormatter` because we're still targeting API-23
   * API-26 is required to use certain Java-11 features :-/
 ### Fixed
+* logging of an epoch-millis rather than the number of millis until next event in `MainActivity`
 ### Removed
 * `SpeechService.dateFormat` to simplify code (we don't invoke it more than once/minute so caching ROI is ~0)
   * `SpeechSevice.updateTimeFormat()` and `Settings` observer also removed as they're no longer needed
-### ToDo
-* migrate build and app to Android-15(API-35) (see readme for changes)
 
 ## 1.0.1 - 2026-09-19
 ### Added
