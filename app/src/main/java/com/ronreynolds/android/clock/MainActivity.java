@@ -4,14 +4,14 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
+import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -30,11 +30,6 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * invoked when the app is first created
-     *
-     * @param savedInstanceState If the activity is being re-initialized after
-     *                           previously being shut down then this Bundle contains the data it most
-     *                           recently supplied in {@link #onSaveInstanceState}.  <b><i>Note: Otherwise it is null.</i></b>
-     *
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +39,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         setupSettingsGUI();
         setupButtons();
+
+        String appNameAndVersion = getString(R.string.app_name) + " v" + BuildConfig.VERSION_NAME;
+        TextView nameAndVersion = findViewById(R.id.txtAppVersion);
+        nameAndVersion.setText(appNameAndVersion);
+
         // delay the rest of our startup work to after the first draw to avoid skipped frames
         getWindow().getDecorView().post(this::finishSetup);
     }
@@ -58,23 +58,23 @@ public class MainActivity extends AppCompatActivity {
         // reflect settings in the UI controls
         updateGuiToSettings();
 
-        // startup log message
-        PackageInfo packageInfo;
-        String appName = getPackageManager().getApplicationLabel(getApplicationInfo()).toString();
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {    // API 33+
-                packageInfo = getPackageManager()
-                        .getPackageInfo(getPackageName(), PackageManager.PackageInfoFlags.of(0));
-            } else {
-                packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            }
-            Logs.i(LOG_TAG, appName + " v" + packageInfo.versionName);
-        } catch (PackageManager.NameNotFoundException fail) {
-            Logs.e(LOG_TAG, "failed to get package info - " + fail, fail);
-        }
+        startupLogs();
 
         // send the first message to start up the SpeechService
         sendFirstIntent();
+    }
+
+    private void startupLogs() {
+        var audioMgr = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        int maxVolume = audioMgr.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        Logs.i(LOG_TAG, getString(R.string.app_name) + " v" + BuildConfig.VERSION_NAME);
+        Logs.i(LOG_TAG, "max volume:" + maxVolume);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            Logs.i(LOG_TAG, "volume 1 dB:" + audioMgr.getStreamVolumeDb(
+                    AudioManager.STREAM_MUSIC, 1, AudioDeviceInfo.TYPE_BUILTIN_SPEAKER));
+            Logs.i(LOG_TAG, "max-volume dB:" + audioMgr.getStreamVolumeDb(
+                    AudioManager.STREAM_MUSIC, maxVolume, AudioDeviceInfo.TYPE_BUILTIN_SPEAKER));
+        }
     }
 
     private void setupLogView() {
