@@ -5,6 +5,14 @@
     android:gravity="center"
     android:orientation="vertical">
 
+    <!-- App name and version -->
+    <TextView
+        android:id="@+id/txtAppVersion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:textSize="18sp"
+        android:textStyle="bold" />
     <!-- Talk Period -->
     <TextView
         android:layout_width="wrap_content"
