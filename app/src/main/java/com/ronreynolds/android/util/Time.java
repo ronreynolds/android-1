@@ -15,6 +15,9 @@ import java.util.Locale;
 public class Time {
     private static final SimpleDateFormat TIMESTAMP_FORMAT =
             new SimpleDateFormat("HH:mm:ss", Locale.US);
+    private static final SimpleDateFormat FILESAFE_DATETIME =
+            new SimpleDateFormat("yyMMdd_HHmmss", Locale.US);
+
 
     /**
      * @return the epoch-millis of the next minute's start (rounds up if you're at the 0.0 second)
@@ -52,8 +55,23 @@ public class Time {
      * @return an HH:mm:ss format string of the current time in the system default timezone
      */
     public static String getNowTimestamp() {
+        return getTimestamp(System.currentTimeMillis());
+    }
+
+    /**
+     * for formatting any epoch-millis value into HH:mm:ss format
+     * @param time epoch millis to format
+     * @return the "HH:mm:ss" of the provided epoch millis (handled as accurately as Date can)
+     */
+    public static String getTimestamp(long time) {
         synchronized (TIMESTAMP_FORMAT) {
-            return TIMESTAMP_FORMAT.format(new Date());
+            return TIMESTAMP_FORMAT.format(new Date(time));
+        }
+    }
+
+    public static String getFSSafeDatetime(long time) {
+        synchronized (FILESAFE_DATETIME) {
+            return FILESAFE_DATETIME.format(new Date(time));
         }
     }
 }
