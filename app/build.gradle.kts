@@ -10,10 +10,10 @@ android {
 
     defaultConfig {
         applicationId = "com.ronreynolds.android.clock"
-        minSdk = 23 // ZTE Z981 (Android 6.0)
+        minSdk = 23 // ZTE Z981 (Android 6.0); Samsung S21+ is API-35 (Android 15.0)
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0.3"
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
