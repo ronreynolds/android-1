@@ -6,19 +6,28 @@
 * commit messages: `<type>[(<scope>)]: <description>`
     * prefixes: fix, feature, build, test, chore, perf, docs, style, refactor, revert, ci, logs
 
-## 1.0.3 - unreleased
+## 1.1.0 - unreleased
 ### Added
-* different minimum-volume numbers based on Android version
-  * 1 on Android-6 is MUCH louder than 1 on Android-15; could be the device but i'll start by presuming the OS
-  * added logging of the min-volume and max-volume dB
+* `MainApplication` to move non-GUI app tasks OUT of `MainActivity`, which is just a view that can be restarted whenever
+* log file
+* added logging of the min-volume and max-volume dB
 * app-name and version header to UI and pulled from `BuildConfig`
+* add a button to upload the app log to Google drive (because we can't read the log directory on the device)
+* log-name rotation so every run's logs are unique (only renamed on upload or app restart)
+  * also embed the app startup time to keep names unique but bucketed to a particular app run
 ### Changed
+* changed "quiet" volume from 1 (which is too quiet on my Samsung Phone) to 10% of max volume to see if that works generally
+* `MainActivity` now creates `SpeechService` and lets it handle all scheduling (including the first intent)
 ### Fixed
 * disabled rotation from causing `MainActivity` to be restarted
   * IDE warning indicates our solution is deprecated and will not work after Android-16 :-/
   * at which point we'll just have to let it rotate and recreate the `MainActivity` (and be smarter about startup-vs-restart)
+* hold ref in `SpeechService` to last pending intent to ensure shutdown is clean and doesn't leave the service hanging
 ### Removed
+* `MainActivity.sendFirstIntent()` and all code related to `MainActivity` creating the first intent to trigger `SpeechService`
 ### ToDo
+* add log-file cleanup to limit storage used (last N logs)
+* consider simple trace lib to timing specific methods to log
 
 ## 1.0.2 - 2026-09-20
 ### Added
