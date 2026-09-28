@@ -35,6 +35,8 @@ public class SpeechService extends Service {
     private volatile boolean ttsReady = false;
     private Handler handler;    // used to delay TTS messages until it's ready to speak
     private Notification startNotification;
+    private MainApplication mainApplication;
+    private PendingIntent lastIntent;
 
     /**
      * @return the communication channel to this service; null since we have none
@@ -49,6 +51,7 @@ public class SpeechService extends Service {
      */
     @Override
     public void onCreate() {
+        mainApplication = (MainApplication) getApplication();
         Logs.d(LOG_TAG, "onCreate");
         super.onCreate();
         handler = new Handler(Looper.getMainLooper());  // used for async callback until TTS is ready
@@ -57,7 +60,7 @@ public class SpeechService extends Service {
             @Override
             public void onPeriodChange() {
                 // if the period changes we discard the currently-scheduled intent and create a new one
-                cancelPendingIntent();
+                cancelLastIntent();
                 scheduleNextIntent();
             }
 
@@ -112,13 +115,18 @@ public class SpeechService extends Service {
         scheduleNextIntent();   // schedule the next intent before we do anything else (minimal lag)
         startForeground(1, startNotification);
         sayTime();
-        return START_STICKY;    // keep us around after this Intent has been processed
+        return START_NOT_STICKY;
     }
 
     @Override
     public void onDestroy() {
         Logs.d(LOG_TAG, "onDestroy");
-        cancelPendingIntent();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+        } else {
+            stopForeground(true);   // it's not deprecated in the older Android systems
+        }
+        cancelLastIntent();
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();   // <-- THIS unbinds the ServiceConnection
@@ -127,10 +135,12 @@ public class SpeechService extends Service {
         super.onDestroy();
     }
 
-    private PendingIntent createIntent() {
-        Context context = this;
-        int requestCode = 42;
-        Intent messageWithTarget = new Intent(this, IntentRelay.class);
+    /**
+     * create an Intent object that will get routed to this service via IntentRelay
+     */
+    public static PendingIntent createIntent(Context context) {
+        int requestCode = 0;
+        Intent messageWithTarget = new Intent(context, IntentRelay.class);
         return PendingIntent.getBroadcast(
                 context, requestCode, messageWithTarget, PendingIntent.FLAG_IMMUTABLE);
     }
@@ -139,31 +149,34 @@ public class SpeechService extends Service {
      * create and schedule the next Intent to invoke this service
      */
     private void scheduleNextIntent() {
-        // create these before delay-till-next-minute calc to minimize edge-case near minute boundary
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         // round down to the edge of the minute
-        long now = System.currentTimeMillis();
-        long triggerTime = Time.roundDownToMinuteMillis(now + Settings.getPeriodMillis());
+        long nowMs = System.currentTimeMillis();
+        long triggerMs = Time.roundDownToMinuteMillis(nowMs + Settings.getPeriodMillis());
         // schedule the intent to fire in periodMillis
-        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, createIntent());
-        Logs.i(LOG_TAG, () -> "scheduleNextIntent; alarmManager.setAndAllowWhileIdle returned; " +
-                "firing in " + (triggerTime - now) / 1000 + " seconds");
+        lastIntent = createIntent(this);
+        mainApplication.getAlarmManager()
+                .setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, lastIntent);
+        Logs.i(LOG_TAG, "scheduleNextIntent; alarmManager.setAndAllowWhileIdle returned; " +
+                "firing in " + (triggerMs - nowMs) / 1000 + " seconds");
     }
 
-    private void cancelPendingIntent() {
+    private void cancelLastIntent() {
         Logs.d(LOG_TAG, "cancelling pending intent");
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        alarmManager.cancel(createIntent());
+        if (lastIntent != null) {
+            mainApplication.getAlarmManager().cancel(lastIntent);
+            lastIntent = null;
+        }
     }
 
     private void sayTime() {
         if (!ttsReady) {
             Logs.d(LOG_TAG, "TTS not ready; adding recursive delayed callback");
-            handler.postDelayed(this::sayTime, 100);    // call us back in 100ms
+            handler.postDelayed(this::sayTime, 500);    // call us back in 500ms
         } else {
             // not sure there's much point for DateTimeFormatter for something so simple and rare
-            String text = new SimpleDateFormat(Settings.is24HrTime() ? "H m" : "h m a", Locale.US)
-                    .format(new Date());
+            String text = Settings.getSpeechPrefix() +
+                    new SimpleDateFormat(Settings.is24HrTime() ? "H m" : "h m a", Locale.US)
+                            .format(new Date());
             Logs.d(LOG_TAG, "sayTime - " + text);
             textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "SpeechService.sayTime");
         }
