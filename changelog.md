@@ -6,7 +6,17 @@
 * commit messages: `<type>[(<scope>)]: <description>`
     * prefixes: fix, feature, build, test, chore, perf, docs, style, refactor, revert, ci, logs
 
-## 1.1.0 - unreleased
+## 1.1.1 - unreleased
+### Added
+### Changed
+* upgraded AGP from 9.4.0 to 9.4.1
+### Fixed
+### Removed
+### ToDo
+* add log-file cleanup to limit storage used (last N logs)
+* consider simple trace lib to timing specific methods to log
+
+## 1.1.0 - 2026-09-28
 ### Added
 * `MainApplication` to move non-GUI app tasks OUT of `MainActivity`, which is just a view that can be restarted whenever
 * log file
@@ -25,9 +35,6 @@
 * hold ref in `SpeechService` to last pending intent to ensure shutdown is clean and doesn't leave the service hanging
 ### Removed
 * `MainActivity.sendFirstIntent()` and all code related to `MainActivity` creating the first intent to trigger `SpeechService`
-### ToDo
-* add log-file cleanup to limit storage used (last N logs)
-* consider simple trace lib to timing specific methods to log
 
 ## 1.0.2 - 2026-09-20
 ### Added
