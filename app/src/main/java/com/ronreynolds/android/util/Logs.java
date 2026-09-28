@@ -3,6 +3,7 @@ package com.ronreynolds.android.util;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 //import java.util.function.Supplier; not supported at API-23
 
@@ -11,10 +12,43 @@ import java.util.List;
  * also supports the message-supplier callback paradigm (like slf4j)
  */
 public final class Logs {
-    private static final List<LogObserver> observers = new ArrayList<>();
+    private static final List<LogObserver> observers = Collections.synchronizedList(new ArrayList<>());
 
     public interface LogObserver {
-        void onLog(int level, String context, String message, Throwable ex);
+        void onLog(LogEvent event);
+    }
+
+    /**
+     * a record of a logging event as a unit (rather that bits and pieces)
+     *
+     * @param time    - the moment the event was created (stored as string for faster rendering)
+     * @param level   - the Log level (info, warn, debug, etc)
+     * @param context - the log tag to somewhat identify source
+     * @param message - the message of the event
+     * @param ex      - optional exception that triggered or is associated with the logged event
+     */
+    public record LogEvent(String time, int level, String context, String message, Throwable ex) {
+        public boolean hasEx() {
+            return ex != null;
+        }
+
+        public String getStackTrace() {
+            return ex != null ? Log.getStackTraceString(ex) : null;
+        }
+
+        public char levelAsChar() {
+            return Logs.levelToChar(level);
+        }
+
+        /**
+         * @return a basic format string for this LogEvent object
+         */
+        public String formatLine() {
+            return hasEx() ?
+                    String.format("%s %c %s \"%s\"%n%t%s%n%t%s", time, levelAsChar(), context,
+                            message, ex, getStackTrace()) :
+                    String.format("%s %c %s \"%s\"", time, levelAsChar(), context, message);
+        }
     }
 
     public static void addObserver(LogObserver observer) {
@@ -26,15 +60,15 @@ public final class Logs {
     }
 
     public static char levelToChar(int level) {
-        switch (level) {
-            case Log.VERBOSE: return 'V';
-            case Log.DEBUG: return 'D';
-            case Log.INFO: return 'I';
-            case Log.WARN: return 'W';
-            case Log.ERROR: return 'E';
-            case Log.ASSERT: return 'A';
-        }
-        throw new IllegalArgumentException("invalid level " + level);
+        return switch (level) {
+            case Log.VERBOSE -> 'V';
+            case Log.DEBUG -> 'D';
+            case Log.INFO -> 'I';
+            case Log.WARN -> 'W';
+            case Log.ERROR -> 'E';
+            case Log.ASSERT -> 'A';
+            default -> throw new IllegalArgumentException("invalid level " + level);
+        };
     }
 
     public static void v(String context, String message) {
@@ -88,7 +122,7 @@ public final class Logs {
 
     public static void w(String context, StringSupplier msg) {
         if (hasWarn(context)) {
-            e(context, msg.get());
+            w(context, msg.get());
         }
     }
 
@@ -175,9 +209,9 @@ public final class Logs {
         onLog(Log.ASSERT, context, msg, ex);
     }
 
-    private static void onLog(int level, String context, String msg, Throwable ex) {
+    private static void onLog(int level, String context, String message, Throwable ex) {
         for (LogObserver observer : observers) {
-            observer.onLog(level, context, msg, ex);
+            observer.onLog(new LogEvent(Time.getNowTimestamp(), level, context, message, ex));
         }
     }
 }
