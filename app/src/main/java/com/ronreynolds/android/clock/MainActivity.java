@@ -1,38 +1,36 @@
 package com.ronreynolds.android.clock;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
-import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
-import android.os.Build;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import com.ronreynolds.android.util.LimitedTextView;
 import com.ronreynolds.android.util.Logs;
-import com.ronreynolds.android.util.Time;
 
 /**
  * main class for the application
  */
 public class MainActivity extends AppCompatActivity {
     private static final int MAX_LOG_LINES = 100;    // any point in making this a setting?
+    private static final float QUIET_RATIO = 0.1f;
     private final String LOG_TAG = getClass().getSimpleName();
     private LimitedTextView logView;
     private boolean muteSettingsChanges;
+    private MainApplication mainApplication;
 
     /**
      * invoked when the app is first created
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mainApplication = (MainApplication) getApplication();
         Logs.i(LOG_TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         // create the GUI bits (but keep it light to avoid skipped frames on startup)
@@ -40,9 +38,8 @@ public class MainActivity extends AppCompatActivity {
         setupSettingsGUI();
         setupButtons();
 
-        String appNameAndVersion = getString(R.string.app_name) + " v" + BuildConfig.VERSION_NAME;
         TextView nameAndVersion = findViewById(R.id.txtAppVersion);
-        nameAndVersion.setText(appNameAndVersion);
+        nameAndVersion.setText(mainApplication.getAppNameAndVersion());
 
         // delay the rest of our startup work to after the first draw to avoid skipped frames
         getWindow().getDecorView().post(this::finishSetup);
@@ -50,43 +47,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void finishSetup() {
         Logs.d(LOG_TAG, "finishSetup()");
-
-        // create our line-limited wrapper around the log TextView/ScrollView pair
         setupLogView();
-        // initialize the global application settings (this can be quite slow)
-        Settings.init(this);
-        // reflect settings in the UI controls
         updateGuiToSettings();
-
-        startupLogs();
-
-        // send the first message to start up the SpeechService
-        sendFirstIntent();
-    }
-
-    private void startupLogs() {
-        var audioMgr = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        int maxVolume = audioMgr.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        Logs.i(LOG_TAG, getString(R.string.app_name) + " v" + BuildConfig.VERSION_NAME);
-        Logs.i(LOG_TAG, "max volume:" + maxVolume);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            Logs.i(LOG_TAG, "volume 1 dB:" + audioMgr.getStreamVolumeDb(
-                    AudioManager.STREAM_MUSIC, 1, AudioDeviceInfo.TYPE_BUILTIN_SPEAKER));
-            Logs.i(LOG_TAG, "max-volume dB:" + audioMgr.getStreamVolumeDb(
-                    AudioManager.STREAM_MUSIC, maxVolume, AudioDeviceInfo.TYPE_BUILTIN_SPEAKER));
-        }
+        // bootstrap SpeechService
+        sayTime(null);
     }
 
     private void setupLogView() {
         // our Log view - updated as log events occur
-        logView = new LimitedTextView(MAX_LOG_LINES, findViewById(R.id.logView),
-                findViewById(R.id.logScrollView));
-        Logs.addObserver((level, context, message, ex) -> {
-            String timestamp = Time.getNowTimestamp();
-            char cLevel = Logs.levelToChar(level);
-            logView.appendLine(
-                    String.format("%s %c %s \"%s\"", timestamp, cLevel, context, message));
-        });
+        logView = new LimitedTextView(MAX_LOG_LINES,
+                findViewById(R.id.logView), findViewById(R.id.logScrollView));
+        Logs.addObserver((event) -> logView.appendLine(event.formatLine()));
     }
 
     private void setupSettingsGUI() {
@@ -120,15 +91,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupButtons() {
-        // simple "go" button (mostly for testing but also to init the TTS system)
-        Button btn = findViewById(R.id.btnSayTime);
-        btn.setOnClickListener(this::sayTime);
-        // clean quit option
-        Button quietBtn = findViewById(R.id.btnQuiet);
-        quietBtn.setOnClickListener(this::setMinimumVolume);
-        // clean quit option
-        Button quitBtn = findViewById(R.id.btnQuit);
-        quitBtn.setOnClickListener(this::shutdown);
+        findViewById(R.id.btnSayTime).setOnClickListener(this::sayTime);
+        findViewById(R.id.btnQuiet).setOnClickListener(this::setQuietVolume);
+        findViewById(R.id.btnQuit).setOnClickListener(this::shutdown);
+        findViewById(R.id.upload_log).setOnClickListener(this::uploadLog);
     }
 
     private void updateGuiToSettings() {
@@ -162,53 +128,43 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private PendingIntent createIntent() {
-        Context context = this;
-        int requestCode = 0;
-        var messageWithTarget = new Intent(this, IntentRelay.class);
-        return PendingIntent.getBroadcast(
-                context, requestCode, messageWithTarget, PendingIntent.FLAG_IMMUTABLE);
-    }
-
-    private void sendFirstIntent() {
-        Logs.i(LOG_TAG, "sendFirstIntent");
-        // create these before delay-till-next-minute calc to minimize edge-case near minute boundary
-        var alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        PendingIntent operation = createIntent();
-        // try to start ON the minute (can introduce up to 60 seconds of delay on startup)
-        long startTimeMillis = Time.getMillisOfNextMinute();
-        // schedule the event for startTimeMillis in the future
-        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startTimeMillis, operation);
-        Logs.i(LOG_TAG, () -> "alarmManager.setAndAllowWhileIdle returned; " +
-                "firing in " + (startTimeMillis - System.currentTimeMillis()) / 1000 + " seconds");
-    }
-
     private void sayTime(View ignore) {
         startService(new Intent(this, SpeechService.class));
     }
 
-    private void setMinimumVolume(View ignore) {
-        var am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);    // lowest audible volume
+    private void setQuietVolume(View ignore) {
+        var am = mainApplication.getAudioManager();
+        int maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        Logs.i(LOG_TAG, "maxVolume:" + maxVolume);
+        // 1 is great on old devices but too quiet on newer devices
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) Math.max(1, QUIET_RATIO * maxVolume), 0);
     }
 
     private void shutdown(View ignore) {
         Logs.i(LOG_TAG, "shutdown called");
 
-        // Cancel first alarm (if any)
-        var alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        alarmManager.cancel(createIntent());
-
         // Stop any running services (if you have one)
-        stopService(new Intent(this, SpeechService.class));
+        boolean stopped = stopService(new Intent(this, SpeechService.class));
+        Logs.i(LOG_TAG, "stopService(SpeechService) returned " + stopped);
 
-        // Finish the Activity
-        finish();
+        // Finish the Activity and all associated processes
+        finishAffinity();
+        // remove the task from the recents list
+        finishAndRemoveTask();
+    }
 
-        // Optional: return to home screen explicitly
-        var homeIntent = new Intent(Intent.ACTION_MAIN);
-        homeIntent.addCategory(Intent.CATEGORY_HOME);
-        homeIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(homeIntent);
+    private void uploadLog(View ignore) {
+        Logs.i(LOG_TAG, "uploadLog");
+        Uri uri = FileProvider.getUriForFile(
+                this,
+                "com.ronreynolds.android.clock.fileprovider",
+                mainApplication.getCurrentLogFile(true)
+        );
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(intent, "Upload log file"));
     }
 }
