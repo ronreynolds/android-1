@@ -90,4 +90,8 @@ public class Settings {
             observer.onClockTypeChange();
         }
     }
+
+    public static String getSpeechPrefix() {
+        return "it's ";  // FIXME - make this a setting
+    }
 }
