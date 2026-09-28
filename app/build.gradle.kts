@@ -13,7 +13,7 @@ android {
         minSdk = 23 // ZTE Z981 (Android 6.0); Samsung S21+ is API-35 (Android 15.0)
         targetSdk = 37
         versionCode = 1
-        versionName = "1.1.0"
+        versionName = "1.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
