@@ -116,7 +116,7 @@ public class MainApplication extends Application {
         Pattern logFileNamePattern = Pattern.compile("app-(\\d+).log");
         File[] logs = logDir.listFiles(
                 (dir, name) -> logFileNamePattern.matcher(name).matches());
-        if (logs != null) {
+        if (logs != null && logs.length > 0) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 Arrays.sort(logs, Comparator.comparingLong(File::lastModified));
             } else {
