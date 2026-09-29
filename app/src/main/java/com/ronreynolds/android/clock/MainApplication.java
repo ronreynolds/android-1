@@ -159,6 +159,7 @@ public class MainApplication extends Application {
     public File getCurrentLogFile(boolean rotate) {
         File oldLogFile = logFile.get();
         if (rotate) {
+            Logs.i(LOG_TAG, "rotating log file due to upload - " + logFile.get().getAbsolutePath());
             // last writer wins; KISS
             logFile.set(nextLogFile());
         }
