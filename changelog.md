@@ -8,12 +8,14 @@
 
 ## 1.1.1 - unreleased
 ### Added
+* log-file cleanup to limit storage used (last N logs)
+* logging of current volume, max-volume, and current volume dB (if available)
 ### Changed
 * upgraded AGP from 9.4.0 to 9.4.1
 ### Fixed
 ### Removed
+* many log statements at startup
 ### ToDo
-* add log-file cleanup to limit storage used (last N logs)
 * consider simple trace lib to timing specific methods to log
 
 ## 1.1.0 - 2026-09-28
