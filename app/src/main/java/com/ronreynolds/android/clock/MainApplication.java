@@ -102,14 +102,7 @@ public class MainApplication extends Application {
     }
 
     private void startupLogs() {
-        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        Logs.i(LOG_TAG, "max volume:" + maxVolume);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            Logs.i(LOG_TAG, "volume 1 dB:" + audioManager.getStreamVolumeDb(
-                    AudioManager.STREAM_MUSIC, 1, AudioDeviceInfo.TYPE_BUILTIN_SPEAKER));
-            Logs.i(LOG_TAG, "max-volume dB:" + audioManager.getStreamVolumeDb(
-                    AudioManager.STREAM_MUSIC, maxVolume, AudioDeviceInfo.TYPE_BUILTIN_SPEAKER));
-        }
+        // not much to log at this point (good sign?)
     }
 
     private File findLastLog() {
