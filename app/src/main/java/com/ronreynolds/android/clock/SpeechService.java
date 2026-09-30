@@ -8,6 +8,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -173,11 +175,19 @@ public class SpeechService extends Service {
             Logs.d(LOG_TAG, "TTS not ready; adding recursive delayed callback");
             handler.postDelayed(this::sayTime, 500);    // call us back in 500ms
         } else {
+            AudioManager am = mainApplication.getAudioManager();
+            int maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            int volume = am.getStreamVolume(AudioManager.STREAM_MUSIC);
             // not sure there's much point for DateTimeFormatter for something so simple and rare
             String text = Settings.getSpeechPrefix() +
                     new SimpleDateFormat(Settings.is24HrTime() ? "H m" : "h m a", Locale.US)
                             .format(new Date());
-            Logs.d(LOG_TAG, "sayTime - " + text);
+            float volumeDb = 0.0f;  // not available on older platforms
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                volumeDb = am.getStreamVolumeDb(
+                        AudioManager.STREAM_MUSIC, volume, AudioDeviceInfo.TYPE_BUILTIN_SPEAKER);
+            }
+            Logs.d(LOG_TAG, "sayTime:'" + text + "' @ " + volume + "/" + maxVolume + " (" + volumeDb + "dB)");
             textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "SpeechService.sayTime");
         }
     }
