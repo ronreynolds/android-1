@@ -1,48 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- ignore warning -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-
-    <application
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:name=".MainApplication"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.TalkingClock">
+    <!-- so we can post notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- so we can have a foreground service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/> <!-- ignore warning -->
+    <!-- so we can speak while backgrounded -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+    <!-- so we can use "exact" alarms -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <application android:name=".MainApplication"
+                 android:allowBackup="true"
+                 android:dataExtractionRules="@xml/data_extraction_rules"
+                 android:fullBackupContent="@xml/backup_rules"
+                 android:icon="@mipmap/ic_launcher"
+                 android:label="@string/app_name"
+                 android:roundIcon="@mipmap/ic_launcher_round"
+                 android:supportsRtl="true"
+                 android:theme="@style/Theme.TalkingClock">
         <!-- register the main screen -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize"
-            android:screenOrientation="portrait"> <!-- deprecated; ignored after Android-16 -->
+        <activity android:name=".MainActivity"
+                  android:exported="true"
+                  android:screenOrientation="portrait"
+                  android:windowSoftInputMode="adjustResize">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
         <!-- the relay that routes broadcast intentions into the service -->
-        <receiver android:name=".IntentRelay" />
-
+        <receiver android:name=".IntentRelay"
+                  android:exported="false"/>
         <!-- the guy that actually emits audio -->
-        <service
-            android:name=".SpeechService"
-            android:foregroundServiceType="mediaPlayback" />
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="com.ronreynolds.android.clock.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
+        <service android:name=".SpeechService"
+                 android:exported="false"
+                 android:foregroundServiceType="mediaPlayback"/>
+        <!-- needed for uploading logs to external sink -->
+        <provider android:name="androidx.core.content.FileProvider"
+                  android:authorities="com.ronreynolds.android.clock.fileprovider"
+                  android:exported="false"
+                  android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                       android:resource="@xml/file_paths"/>
         </provider>
     </application>
 </manifest>
