@@ -9,6 +9,8 @@
 ## 1.1.2 - unreleased
 ### Added
 ### Changed
+* tidy up build-gradle and android-manifest per Copilot suggestions and feedback
+* buttons changed to linked text and other tweaks to tighten up UI
 ### Fixed
 ### Removed
 ### ToDo
