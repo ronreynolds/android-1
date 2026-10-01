@@ -6,17 +6,27 @@
 * commit messages: `<type>[(<scope>)]: <description>`
     * prefixes: fix, feature, build, test, chore, perf, docs, style, refactor, revert, ci, logs
 
-## 1.1.1 - unreleased
+## 1.1.2 - unreleased
+### Added
+### Changed
+### Fixed
+### Removed
+### ToDo
+* consider simple trace lib to timing specific methods to log
+* change text prefix to real setting?  (currently hard-coded in `Settings`)
+
+## 1.1.1 - 2026-10-01
 ### Added
 * log-file cleanup to limit storage used (last N logs)
 * logging of current volume, max-volume, and current volume dB (if available)
+* signing of release APK
+* release-variant (debug or release) to app-name + version string
+* ability to set Quiet volume to current volume
 ### Changed
 * upgraded AGP from 9.4.0 to 9.4.1
-### Fixed
+* simplified UI (main-activity)
 ### Removed
 * many log statements at startup
-### ToDo
-* consider simple trace lib to timing specific methods to log
 
 ## 1.1.0 - 2026-09-28
 ### Added
