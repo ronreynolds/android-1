@@ -1,3 +1,14 @@
+import java.util.Properties
+
+val signingProps = Properties().apply {
+    val file = rootProject.file("app/signing.properties")
+    if (file.exists()) {
+        load(file.inputStream())
+    } else {
+        throw GradleException("Missing signing.properties file")
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -31,6 +42,23 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(signingProps["storeFile"]!!)
+            storePassword = signingProps["storePassword"]!!.toString()
+            keyAlias = signingProps["keyAlias"]!!.toString()
+            keyPassword = signingProps["keyPassword"]!!.toString()
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+        }
     }
 }
 
