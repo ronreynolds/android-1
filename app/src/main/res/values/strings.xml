@@ -3,7 +3,7 @@
     <string name="service_name">Start Talking Clock</string>
     <string name="settings">Settings</string>
     <string name="say_time">Say Time</string>
-    <string name="quiet">Quiet</string>
+    <string name="be_quiet">Be Quiet</string>
     <string name="quit">Quit</string>
     <string name="_24_hour">24-hour</string>
     <string name="_12_hour">12-hour</string>
@@ -12,7 +12,8 @@
     <string name="_10_minutes">10 min</string>
     <string name="_5_minutes">5 min</string>
     <string name="_1_minute">1 min</string>
-    <string name="talk_period">Talk Period (minutes)</string>
+    <string name="talk_period">Talk Every</string>
     <string name="log">Log</string>
     <string name="upload_log">Upload Log</string>
+    <string name="set_quiet">Set Quiet</string>
 </resources>
