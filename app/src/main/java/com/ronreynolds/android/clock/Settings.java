@@ -23,7 +23,8 @@ public class Settings {
     private static final String LOG_TAG = "Settings";
     private static final String KEY_24HR_TIME = "is_24hr_time";
     private static final String KEY_MINUTE_PERIOD = "minute_period";
-    // don't be the only reason the observers don't get GCed.
+    private static final String KEY_QUIET_VOLUME = "quiet_volume";
+
     private static SettingObserver observer;
     private static SharedPreferences preferences;
 
@@ -93,5 +94,13 @@ public class Settings {
 
     public static String getSpeechPrefix() {
         return "it's ";  // FIXME - make this a setting
+    }
+
+    public static void setQuietVolume(int volume) {
+        preferences.edit().putInt(KEY_QUIET_VOLUME, volume).apply();
+        // not currently observable - no point?
+    }
+    public static int getQuietVolume() {
+        return getInteger(KEY_QUIET_VOLUME, 1);
     }
 }
