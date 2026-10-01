@@ -88,7 +88,7 @@ public class MainApplication extends Application {
         // not exactly AtomicRef clean but good enough while supporting API-23
         if (appNameAndVersion == null) {
             appNameAndVersion = getApplicationInfo().loadLabel(getPackageManager())
-                    + " v" + BuildConfig.VERSION_NAME;
+                    + " v" + BuildConfig.VERSION_NAME + "(" + BuildConfig.BUILD_TYPE + ")";
         }
         return appNameAndVersion;
     }
