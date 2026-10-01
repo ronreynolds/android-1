@@ -12,29 +12,20 @@ val signingProps = Properties().apply {
 plugins {
     alias(libs.plugins.android.application)
 }
-
+kotlin {
+    jvmToolchain(17)
+}
 android {
     namespace = "com.ronreynolds.android.clock"
-    compileSdk {
-        version = release(37)
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.ronreynolds.android.clock"
         minSdk = 23 // ZTE Z981 (Android 6.0); Samsung S21+ is API-35 (Android 15.0)
         targetSdk = 37
         versionCode = 1
-        versionName = "1.1.1"
-
+        versionName = "1.1.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            optimization {
-                enable = false
-            }
-        }
     }
     buildFeatures {
         buildConfig = true
@@ -43,7 +34,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
     signingConfigs {
         create("release") {
             storeFile = file(signingProps["storeFile"]!!)
@@ -52,16 +42,33 @@ android {
             keyPassword = signingProps["keyPassword"]!!.toString()
         }
     }
-
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+    packaging {
+        jniLibs.useLegacyPackaging = false
+    }
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = true
         }
     }
 }
-
 dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
