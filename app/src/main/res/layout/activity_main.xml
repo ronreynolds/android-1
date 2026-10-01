@@ -14,18 +14,19 @@
         android:textSize="18sp"
         android:textStyle="bold" />
     <!-- Talk Period -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingTop="12dp"
-        android:text="@string/talk_period"
-        android:textStyle="bold" />
 
     <RadioGroup
         android:id="@+id/periodGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="12dp"
+            android:text="@string/talk_period"
+            android:textStyle="bold" />
 
         <RadioButton
             android:id="@+id/period1"
@@ -50,21 +51,23 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/_15_minutes" />
+
     </RadioGroup>
 
     <!-- Time Format -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingTop="12dp"
-        android:text="@string/time_format"
-        android:textStyle="bold" />
 
     <RadioGroup
         android:id="@+id/timeFormatGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="12dp"
+            android:text="@string/time_format"
+            android:textStyle="bold" />
 
         <RadioButton
             android:id="@+id/time12"
@@ -77,6 +80,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/_24_hour" />
+
     </RadioGroup>
 
     <LinearLayout
@@ -86,11 +90,18 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/btnQuiet"
+            android:id="@+id/btnSetQuiet"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
-            android:text="@string/quiet" />
+            android:text="@string/set_quiet" />
+
+        <Button
+            android:id="@+id/btnBeQuiet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:text="@string/be_quiet" />
 
         <Button
             android:id="@+id/btnSayTime"
@@ -98,6 +109,19 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
             android:text="@string/say_time" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
+
+        <Button
+            android:id="@+id/upload_log"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:text="@string/upload_log" />
 
         <Button
             android:id="@+id/btnQuit"
@@ -106,27 +130,7 @@
             android:layout_marginHorizontal="20dp"
             android:background="#FF0000"
             android:text="@string/quit" />
-    </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="20dp"
-            android:paddingTop="10dp"
-            android:text="@string/log"
-            android:textStyle="bold" />
-
-        <Button
-            android:id="@+id/upload_log"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="20dp"
-            android:text="@string/upload_log" />
     </LinearLayout>
 
     <ScrollView
