@@ -92,7 +92,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupButtons() {
         findViewById(R.id.btnSayTime).setOnClickListener(this::sayTime);
-        findViewById(R.id.btnQuiet).setOnClickListener(this::setQuietVolume);
+        findViewById(R.id.btnSetQuiet).setOnClickListener(this::setQuietToVolume);
+        findViewById(R.id.btnBeQuiet).setOnClickListener(this::setVolumeToQuiet);
         findViewById(R.id.btnQuit).setOnClickListener(this::shutdown);
         findViewById(R.id.upload_log).setOnClickListener(this::uploadLog);
     }
@@ -132,12 +133,20 @@ public class MainActivity extends AppCompatActivity {
         startService(new Intent(this, SpeechService.class));
     }
 
-    private void setQuietVolume(View ignore) {
-        var am = mainApplication.getAudioManager();
-        int maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        Logs.i(LOG_TAG, "maxVolume:" + maxVolume);
-        // 1 is great on old devices but too quiet on newer devices
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, (int) Math.max(1, QUIET_RATIO * maxVolume), 0);
+    /** set the current volume to the quiet value */
+    private void setVolumeToQuiet(View ignore) {
+        AudioManager am = mainApplication.getAudioManager();
+        int quietVolume = Settings.getQuietVolume();
+        Logs.i(LOG_TAG, "setting current volume to " + quietVolume);
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, quietVolume, 0);
+    }
+
+    /** set the current volume as the quiet volume */
+    private void setQuietToVolume(View ignore) {
+        AudioManager am = mainApplication.getAudioManager();
+        int currentVolume = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+        Logs.i(LOG_TAG, "setting quiet volume to " + currentVolume);
+        Settings.setQuietVolume(currentVolume);
     }
 
     private void shutdown(View ignore) {
