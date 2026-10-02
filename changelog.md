@@ -13,6 +13,7 @@
 * buttons changed to linked text and other tweaks to tighten up UI
 ### Fixed
 ### Removed
+* removed pointless `androidTest` directory
 ### ToDo
 * consider simple trace lib to timing specific methods to log
 * change text prefix to real setting?  (currently hard-coded in `Settings`)
