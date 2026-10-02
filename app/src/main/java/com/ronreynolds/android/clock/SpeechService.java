@@ -121,6 +121,7 @@ public class SpeechService extends Service {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onDestroy() {
         Logs.d(LOG_TAG, "onDestroy");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
