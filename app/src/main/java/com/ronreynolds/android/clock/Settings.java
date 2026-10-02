@@ -100,6 +100,7 @@ public class Settings {
         preferences.edit().putInt(KEY_QUIET_VOLUME, volume).apply();
         // not currently observable - no point?
     }
+
     public static int getQuietVolume() {
         return getInteger(KEY_QUIET_VOLUME, 1);
     }

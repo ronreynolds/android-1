@@ -39,6 +39,7 @@ public class Time {
 
     /**
      * given an epochMillis value round it down to the HH:mm:00 of the current minute
+     *
      * @param epochMillis the value to be rounded down to the 0.0 second boundary of its minute
      * @return the epoch-millis of the most recent HH:mm:00.0 instant
      */
@@ -52,6 +53,7 @@ public class Time {
 
     /**
      * get "now" in HH:mm:ss format (in whatever the default timezone is)
+     *
      * @return an HH:mm:ss format string of the current time in the system default timezone
      */
     public static String getNowTimestamp() {
@@ -60,6 +62,7 @@ public class Time {
 
     /**
      * for formatting any epoch-millis value into HH:mm:ss format
+     *
      * @param time epoch millis to format
      * @return the "HH:mm:ss" of the provided epoch millis (handled as accurately as Date can)
      */

@@ -4,10 +4,9 @@
         android:title="Integer minutes per"
         android:defaultValue="1"
         android:dialogTitle="Set the number of minutes between spoken clock times"
-        android:inputType="number" />
-
+        android:inputType="number"/>
     <SwitchPreference
         android:key="is_24hr_time"
         android:title="Use 24-hour format"
-        android:defaultValue="true" />
+        android:defaultValue="true"/>
 </PreferenceScreen>

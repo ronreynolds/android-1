@@ -9,6 +9,7 @@ import java.util.Deque;
 
 /**
  * limits a TextView to a maximum number of lines
+ *
  * @author Copilot (mostly)
  */
 public class LimitedTextView {

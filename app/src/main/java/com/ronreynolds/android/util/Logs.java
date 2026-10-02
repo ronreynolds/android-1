@@ -5,7 +5,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-//import java.util.function.Supplier; not supported at API-23
 
 /**
  * wrapper around Android Logs that lets us add an observer;

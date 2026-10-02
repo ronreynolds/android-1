@@ -133,7 +133,9 @@ public class MainActivity extends AppCompatActivity {
         startService(new Intent(this, SpeechService.class));
     }
 
-    /** set the current volume to the quiet value */
+    /**
+     * set the current volume to the quiet value
+     */
     private void setVolumeToQuiet(View ignore) {
         AudioManager am = mainApplication.getAudioManager();
         int quietVolume = Settings.getQuietVolume();
@@ -141,7 +143,9 @@ public class MainActivity extends AppCompatActivity {
         am.setStreamVolume(AudioManager.STREAM_MUSIC, quietVolume, 0);
     }
 
-    /** set the current volume as the quiet volume */
+    /**
+     * set the current volume as the quiet volume
+     */
     private void setQuietToVolume(View ignore) {
         AudioManager am = mainApplication.getAudioManager();
         int currentVolume = am.getStreamVolume(AudioManager.STREAM_MUSIC);

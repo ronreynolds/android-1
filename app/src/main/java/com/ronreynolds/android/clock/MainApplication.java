@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Application;
 import android.content.Context;
-import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.os.Build;
 
